@@ -21,22 +21,24 @@
 -----
 
 ## 开发者文档
-代码及UI素材源文件位于 */源文件* 中，您可直接打开 */源文件/测量实习.Sln* 参考代码。
-下面将讲解各脚本的使用方法：
 
-### 1.数据库
+代码及UI素材源文件位于 */源文件* 中，您可直接打开 */源文件/测量实习.Sln* 参考代码。
+
+### 下面将讲解各脚本的使用方法：
+
+#### 1.数据库
   本软件使用了Unity命名空间下的ScriptableObject类将数据统一存储在Asset资源包中，便于其他脚本统一访问。*/源文件/Assets/DataCollection/DataDetails.cs* 文件定义了一个测站需要得到的所有数据，并以测站为一个数据块的单位，将这些数据块存储在 */源文件/Assets/DataCollection/Data_SO.cs* 声明的List数据库中。
 
-### 2.文件开闭
-  为提高软件复用性，必须实现文件IO的操作。文件操作位于`XCH.SurveyPractice.FileOperation`的命名空间中，代码可以复用至任何需要文件读写的软件里。*/源文件/Assets/DataCollection/OpenFileName.cs* 定义了读写文件的数据结构；*/源文件/Assets/Scrips/LocalDialog.cs* 中实现了以系统调用方式呼出“打开文件”与“保存文件”的Windows窗体； */源文件/Assets/Scrips/SelectFile.cs* 则使用这些方法与UI按钮绑定，记录用户读写的位置，便于后面对Excel文件进行打开与保存的操作。
+#### 2.文件开闭
+  为提高软件复用性，必须实现文件IO的操作。文件操作位于`XCH.SurveyPractice.FileOperation`的命名空间中，代码可以复用至任何需要文件读写的软件里。*/源文件/Assets/DataCollection/OpenFileName.cs* 定义了读写文件的数据结构；*/源文件/Assets/Scripts/LocalDialog.cs* 中实现了以系统调用方式呼出“打开文件”与“保存文件”的Windows窗体； */源文件/Assets/Scripts/SelectFile.cs* 则使用这些方法与UI按钮绑定，记录用户读写的位置，便于后面对Excel文件进行打开与保存的操作。
   
-### 3.读写Excel
-  本软件使用了EPPlus类库读写Excel表格。在获得用户选择的路径后，*/源文件/Assets/Scrips/ContactWithExcel.cs* 将根据该路径打开对应的Excel文件，并按既定的格式读取内容至数据库中，与此同时，完成一个测站内所有数据的计算，如后视距、视距差、前视距、前后累积差、黑色/红色面后尺减前尺、平均高差等。在用户导入完毕即将导出时，该脚本将数据库中的数据重新写回Excel，并可根据用户需要另存为至任意位置。
+#### 3.读写Excel
+  本软件使用了EPPlus类库读写Excel表格。在获得用户选择的路径后，*/源文件/Assets/Scripts/ContactWithExcel.cs* 将根据该路径打开对应的Excel文件，并按既定的格式读取内容至数据库中，与此同时，完成一个测站内所有数据的计算，如后视距、视距差、前视距、前后累积差、黑色/红色面后尺减前尺、平均高差等。在用户导入完毕即将导出时，该脚本将数据库中的数据重新写回Excel，并可根据用户需要另存为至任意位置。
   
-### 4.数据处理与验核
-  所有测站内部的数据（除改正后平均高差）都在读入的时候就计算完毕，然后由 */源文件/Assets/Scrips/DataManager.cs* 接管这些数据，并做一些必要的加和处理，如计算高差闭合差、视距和、总距离等，并依此得到高差闭合差的距离分配系数，计算得到各测站的改正后高差。检核也在此处完成，如有超限的数据，*/源文件/Assets/Scrips/DataManager.cs* 将通过 */源文件/Assets/Scrips/EventHandler.cs* 通知 */源文件/Assets/Scrips/UIManager.cs*，后者将在屏幕上弹出超限警告，此时输出文件，特定单元格中同样将提示超限。
+#### 4.数据处理与验核
+  所有测站内部的数据（除改正后平均高差）都在读入的时候就计算完毕，然后由 */源文件/Assets/Scrips/DataManager.cs* 接管这些数据，并做一些必要的加和处理，如计算高差闭合差、视距和、总距离等，并依此得到高差闭合差的距离分配系数，计算得到各测站的改正后高差。检核也在此处完成，如有超限的数据，*/源文件/Assets/Scrips/DataManager.cs* 将通过 */源文件/Assets/Scripts/EventHandler.cs* 通知 */源文件/Assets/Scripts/UIManager.cs*，后者将在屏幕上弹出超限警告，此时输出文件，特定单元格中同样将提示超限。
   
-### 5.工具类
-  */源文件/Assets/Scrips/EventHandler.cs* 作为全局静态类，是各事件的事件中心，其目的是充分解耦，增强软件的可扩展性，未来的所有事件都可在此声明。
-  */源文件/Assets/Scrips/Singleton.cs* 泛型单例类，一些manager文件全局仅存在一个，使他们成为单例便于其他类进行访问调用。
+#### 5.工具类
+  */源文件/Assets/Scripts/EventHandler.cs* 作为全局静态类，是各事件的事件中心，其目的是充分解耦，增强软件的可扩展性，未来的所有事件都可在此声明。
+  */源文件/Assets/Scripts/Singleton.cs* 泛型单例类，一些manager文件全局仅存在一个，使他们成为单例便于其他类进行访问调用。
 
