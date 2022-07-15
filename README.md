@@ -38,7 +38,31 @@
   本软件使用了EPPlus类库读写Excel表格。在获得用户选择的路径后，***/源文件/Assets/Scripts/ContactWithExcel.cs*** 将根据该路径打开对应的Excel文件，并按既定的格式读取内容至数据库中，与此同时，完成一个测站内所有数据的计算，如后视距、视距差、前视距、前后累积差、黑色/红色面后尺减前尺、平均高差等。在用户导入完毕即将导出时，该脚本将数据库中的数据重新写回Excel，并可根据用户需要另存为至任意位置。
   
 #### 4.数据处理与验核
-  所有测站内部的数据（除改正后平均高差）都在读入的时候就计算完毕，然后由 ***/源文件/Assets/Scrips/DataManager.cs*** 接管这些数据，并做一些必要的加和处理，如计算高差闭合差、视距和、总距离等，并依此得到高差闭合差的距离分配系数，计算得到各测站的改正后高差。检核也在此处完成，如有超限的数据，***/源文件/Assets/Scrips/DataManager.cs*** 将通过 ***/源文件/Assets/Scripts/EventHandler.cs*** 通知 ***/源文件/Assets/Scripts/UIManager.cs***，后者将在屏幕上弹出超限警告，此时输出文件，特定单元格中同样将提示超限。
+  所有测站内部的数据（除改正后平均高差）都在读入的时候就计算完毕，然后由 ***/源文件/Assets/Scrips/DataManager.cs*** 接管这些数据，并做一些必要的加和处理，如计算高差闭合差、视距和、总距离等，并依此得到高差闭合差的距离分配系数，计算得到各测站的改正后高差。检核也在此处完成，先针对各测站的视线长、前后视距离差、红黑面读数差和红黑面高差之差做判断，之后再总体上判断环路闭合差与前后视距离累计差是否符合条件，代码如下所示：
+ ```
+   private void CheckLimit()
+    {
+        foreach(var data in data_SO.dataList)
+        {
+            if (data.Parallax > 5 || data.RearLevelCheck > 3 || data.FrontLevelCheck > 3 || data.RearFrontDifferenceLevelCheck > 5 || data.TotalSightDistance > 80)
+            {
+                EventHandler.CallOverLimitEvent();
+                isOverLimit = true;
+            }
+        }
+
+        if (!isOverLimit)
+        {
+            float differenceLimit = 20 * MathF.Sqrt(distance * 0.001f);
+            if (heightDifferenceSum * 1000 > differenceLimit || data_SO.dataList[spotCount - 1].ParallaxSum > 10)
+            {
+                EventHandler.CallOverLimitEvent();
+                isOverLimit = true;
+            }
+        }
+    }
+  ```
+  如有超限的数据，***/源文件/Assets/Scrips/DataManager.cs*** 将通过 ***/源文件/Assets/Scripts/EventHandler.cs*** 通知 ***/源文件/Assets/Scripts/UIManager.cs***，后者将在屏幕上弹出超限警告，此时输出文件，特定单元格中同样将提示超限。
   
 #### 5.工具类
   ***/源文件/Assets/Scripts/EventHandler.cs*** 作为全局静态类，是各事件的事件中心，其目的是充分解耦，增强软件的可扩展性，未来的所有事件都可在此声明。
