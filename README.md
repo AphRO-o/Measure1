@@ -191,9 +191,9 @@ private void Calculate()
   本软件搭载了个性化的GUI操作界面，便于用户查看与修改数值。总体上，UI显示控制由 ***/源文件/Assets/Scrips/UIManager.cs*** 全权控制，并且不会耦合至其他功能类中。除了控制按钮点按发生事件、在对应格子显示数值以外，该脚本控制着 ***/源文件/Assets/Scrips/SlotUI.cs*** 的子脚本，用于在屏幕左侧生成对应数量的测站信息栏供用户输入。各测站内部的信息显示由每个 `SlotUI` 脚本自行控制，从而实现了分工合作与充分解耦。
   
 #### 6.工具类
-  ***/源文件/Assets/Scripts/EventHandler.cs*** 作为全局静态类，是各事件的事件中心，其目的是将各功能类充分解耦，增强软件的可扩展性，未来的所有事件都可在此声明。
+  ***/源文件/Assets/Scripts/EventHandler.cs*** 全局静态类事件中心，是观察者模式的扩展脚本，其目的是将各功能类充分解耦，增强软件的可扩展性，未来的所有事件都可在此声明。
   
-  ***/源文件/Assets/Scripts/Singleton.cs*** 泛型单例类，一些 ` manager `文件全局仅存在一个，使他们成为单例便于其他类进行访问调用。本软件仅 ***/源文件/Assets/Scripts/DataManager.cs*** 继承了该单例父类，但是为了后续扩展，还是选择将其写为父类。
+  ***/源文件/Assets/Scripts/Singleton.cs*** 泛型单例类，一些 ` manager `文件全局仅存在一个，使他们成为单例便于其他类进行访问调用。本软件仅 ***/源文件/Assets/Scripts/DataManager.cs*** 继承了该单例父类，但是为了后续扩展，还是选择将单例写为基类。
   
   -----
   
