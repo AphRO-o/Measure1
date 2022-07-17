@@ -193,7 +193,7 @@ private void Calculate()
 #### 6.工具类
   ***/源文件/Assets/Scripts/EventHandler.cs*** 作为全局静态类，是各事件的事件中心，其目的是将各功能类充分解耦，增强软件的可扩展性，未来的所有事件都可在此声明。
   
-  ***/源文件/Assets/Scripts/Singleton.cs*** 泛型单例类，一些manager文件全局仅存在一个，使他们成为单例便于其他类进行访问调用。本软件仅 ***/源文件/Assets/Scripts/DataManager.cs*** 继承了该单例父类，但是为了后续扩展，还是选择将其写为父类。
+  ***/源文件/Assets/Scripts/Singleton.cs*** 泛型单例类，一些 ` manager `文件全局仅存在一个，使他们成为单例便于其他类进行访问调用。本软件仅 ***/源文件/Assets/Scripts/DataManager.cs*** 继承了该单例父类，但是为了后续扩展，还是选择将其写为父类。
   
   -----
   
