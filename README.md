@@ -23,6 +23,14 @@
 
 6.由于制作仓促，难免有难以发现的错误。遇到错误发生时请点击重置按钮或重启软件，并重新从步骤1开始操作。
 
+7.如果窗口发生畸变请调整窗口至合适大小比例。
+
+### 注意：
+  由于为软件DEMO，作者未制作输入错误或BUG发生的提示窗口，如果进行输入后软件没有任何反应，请点击重置按钮或重启软件后重新输入，并仔细检查输入文件的格式是否符合规范。
+
+### 按照实习要求，具体操作如下：
+  在测站数量栏输入4，敲击回车，此时右下栏弹出相应数量的测点栏。点击导入文件按钮，弹窗选择文件路径 ***/输入输出示例/输入文件.xlsx*** ，此时右栏显示所有输入信息，并在左栏显示测站点与后视点的相对位置图像（您也可以手动输入，不过尚有BUG未更改，不建议）。点击测点栏编号左侧的圆形按钮，对应测点的图像将在左栏显示，一并显示的还有平距与平面夹角。此时可以根据需要修改右栏的数据，左栏图像会相应变化。对数据满意时点击导出结果按钮并选择路径，所有手动输入结果都将一并保存。
+
 -----
 
 ## 开发者文档
@@ -44,7 +52,6 @@
   
 #### 4.数据处理与验核
   由 ***/源文件/Assets/Scrips/DataManager.cs*** 接管从Excel中读取的数据，并做一些必要的加和处理，如计算距离与角度。`DataManager.Calculate()` 方法实现了这些步骤，由于为程序的核心步骤，将其展示在此：
-  
   
 ```
 private void Calculate()
@@ -75,7 +82,34 @@ private void Calculate()
 #### 5.GUI
   本软件搭载了个性化的GUI操作界面，便于用户查看与修改数值。总体上，UI显示控制由 ***/源文件/Assets/Scrips/UIManager.cs*** 全权控制，并且不会耦合至其他功能类中。除了控制按钮点按发生事件、在对应格子显示数值以外，该脚本控制着 ***/源文件/Assets/Scrips/SlotUI.cs*** 的子脚本，用于在屏幕左侧生成对应数量的测站信息栏供用户输入。各测站内部的信息显示由每个 `SlotUI` 脚本自行控制，从而实现了分工合作与充分解耦。
   
-  另外，本软件实现了测点坐标的可视化， ***/源文件/Assets/Scrips/UIManager.cs*** 
+  另外，本软件实现了测点坐标的可视化， ***/源文件/Assets/Scrips/UIManager.cs*** 负责在需要的时刻生成测站的图像并作连线，其核心代码如下所示：
+  
+```
+private void OnInstantiateSpotPrefab(Coordinate coord, int id)
+    {
+        //在对应位置生成测点图片
+        Vector3 targetPos = new Vector3((float)coord.x, (float)coord.y, 0);
+        RectTransform spotRect = Instantiate(spotPrefab, targetPos, Quaternion.identity, detailsInfo).GetComponent<RectTransform>();
+        spotRect.localPosition = targetPos;
+        spotRect.GetComponentInChildren<Text>().text = id.ToString();
+
+        //与测站点连线
+        CreateLine(Vector3.zero, targetPos);
+
+        //在线段中点生成距离
+        Vector2 middlePos = GetBetweenPoint(Vector3.zero, targetPos);
+        RectTransform txtRect = Instantiate(textPrefab, middlePos, Quaternion.identity, detailsInfo).GetComponent<RectTransform>();
+        txtRect.localPosition = middlePos;
+        txtRect.GetComponent<Text>().text = data_SO.dataList[id - 1].horizontalDistance.ToString("#0.000");
+
+        //在测站图片下方生成与后视点的夹角
+        RectTransform angleTextRect = Instantiate(textPrefab, Vector3.zero + 80 * Vector3.down, Quaternion.identity, detailsInfo).GetComponent<RectTransform>();
+        angleTextRect.localPosition = Vector3.zero + 80 * Vector3.down;
+        angleTextRect.GetComponent<Text>().text = 
+            data_SO.dataList[id - 1].Degree.ToString() + "° " + data_SO.dataList[id - 1].Minute.ToString() + "' " + data_SO.dataList[id - 1].Second.ToString() + "''";
+    }
+  ```
+  应该注意的是，为使生成的图像元素不随窗口变动而变动，应使用 `RectTransform.localPosition` 字段而非 `RectTransform.position` ，即应使用元素与父物体的相对坐标，这也是作者在进行开发时遇到的主要问题之一。
   
 #### 6.工具类
   ***/源文件/Assets/Scripts/EventHandler.cs*** 全局静态类事件中心，是观察者模式的扩展脚本，其目的是将各功能类充分解耦，增强软件的可扩展性，未来的所有事件都可在此声明。
@@ -86,10 +120,10 @@ private void Calculate()
   
   ## 数据概况与实习经验
   
-  为检验程序正确性，使用了 ***/输入输出示例/输入文件.xlsx*** 作为输入对象，得到的结果较为可观，A坐标的计算结果与给出的起算坐标一致，方位角的计算结果与起算方位角相差2秒，无超限数据。结果导出如 ***/输入输出示例/输入文件.xlsx*** 所示，数据自动填写的结果经检验正确。
+  为检验程序正确性，使用了 ***/输入输出示例/输入文件.xlsx*** 作为输入对象，得到的结果较为可观，输出数据的结果与显示的结果（角度大小、线段长短）一致，可以认为测点的显示结果是正确的。
   
-  为了精益求精，我在寻求可视化操作界面的解决方案上花了不少时间。主要难点体现在如何根据用户输入的测站数量弹出对应数量的测站栏供用户填写，最终采用将测站栏UI制作成预制体的方式，交由 `UIManager` 在指定的时机与位置生成，可以看到，最终效果还算理想，但是一个主要问题是，由于搭载这些测站栏的父物体不是可滚动的窗体，一旦测站数量过多，就难以看清并填写数据了（不过此时导出的结果依然是正确的）。由于时间不足，我尚未对此做出改进，是未来可以进一步探究的命题。
+  为了精益求精，我在寻求可视化操作界面的解决方案上花了不少时间。主要难点体现在如何将用户输入的测点坐标体现在图像上，最终采用计算出各测点相对测站的坐标，将测站点置于显示窗口的中心，如此一来便形成了一平面直角坐标系，然后将测站栏UI制作成预制体的方式，交由 `UIManager` 在指定的时机按这个相对坐标生成，可以看到，最终效果还算理想，但是一个主要问题是，由于搭载这些测点栏的父物体不是可调整比例的窗体，一旦几个测点的相对坐标相差较远，坐标图像就会生成到屏幕外面去（不过此时导出的结果依然是正确的）。由于时间不足，我尚未对此做出改进，是未来可以进一步探究的命题。
   
-  另外，在如何实现用户自填写数据上，我同样花费了一些心思。如果导入文件后发现数据有误，回到Excel更改数据再重新导入比较麻烦，因此设计了可以直接在GUI上更改数据的方案，即将UI的 `Text` 组件全部更换为 `InputField` ，该改动为我做随机扰动如何保存这一问题做了解答。随机扰动作为实习的要求之一，尽管不合理，却有实现的必要，在我的软件语境中，要求UI部分与数据处理部分的强交互，稍有不慎便会耦合在一起。最终方案是做一按钮，需要扰动时点击即可，最终改动的数据将由 `InputField.OnEndEdit()` 方法写回数据库中，在实现改动的保存同时，也保证了UI功能类的独立性。
+  另外，在如何实现用户自填写数据上，我同样花费了一些心思。如果导入文件后发现数据有误，回到Excel更改数据再重新导入比较麻烦，因此设计了可以直接在GUI上更改数据的方案，即将UI的 `Text` 组件全部更换为 `InputField` ，最终改动的数据将由 `InputField.OnEndEdit()` 方法写回数据库中，在实现改动的保存同时，也保证了UI功能类的独立性。
   
   实习过程中，我还发现了不少问题，一些细微的BUG，如对象时不时地报空，可能要花费我一整个上午去纠察。不过看到软件成型的时候，还是不由自主地感到兴奋，这便是我热爱编程的原因。也感谢测量实习给了我一个温故Unity与C#的机会，让我拥有了独自编制软件的宝贵经验。
